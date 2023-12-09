@@ -23,6 +23,8 @@ const Home = () => {
   const [tempMax, setTempMax] = useState(1) // Armazenando minutos
   const [submitting, isSubmitting] = useState(false)
 
+  const [auctionHistory, setAuctionHistory] = useState<Auction[]>([]); //para pegar historico de leilões
+
   const navigate = useNavigate()
   const { socket } = useContext(SocketContext)
 

@@ -40,6 +40,7 @@ const LiveAuction = () => {
   const lastBidTime = useRef(Date.now());
   const auctionStartTimeoutId = useRef<NodeJS.Timeout | null>(null); // Novo useRef para o timeout de início do leilão
   const [isAuctionFinished, setIsAuctionFinished] = useState(false); // Novo estado para verificar se o leilão foi finalizado
+  
 
 
   //esse useeffect é pra funcionar o cronometro
