@@ -39,6 +39,7 @@ const LiveAuction = () => {
   const timeoutId = useRef<NodeJS.Timeout | null>(null);
   const lastBidTime = useRef(Date.now());
   const auctionStartTimeoutId = useRef<NodeJS.Timeout | null>(null); // Novo useRef para o timeout de início do leilão
+  const [isAuctionFinished, setIsAuctionFinished] = useState(false); // Novo estado para verificar se o leilão foi finalizado
 
   useEffect(() => {
     if (tempo > 0) {
@@ -74,6 +75,7 @@ const LiveAuction = () => {
         } else {
           window.alert('Leilão finalizado');
         }
+        setIsAuctionFinished(true); // Define o estado isAuctionFinished como true quando o leilão é finalizado
       }
     }, 10000);
 
@@ -99,7 +101,7 @@ const LiveAuction = () => {
       if (bids.length === 0) {
         window.alert('Leilão cancelado');
         // Aqui você pode adicionar mais código para lidar com o cancelamento do leilão
-      }
+      }setIsAuctionFinished(true);
     }, 10000);
 
     return () => {
@@ -122,7 +124,7 @@ const LiveAuction = () => {
 
       </div>
   
-      <input type="submit" value="Voltar tela de inicio " onClick={handleBackClick} />
+      {isAuctionFinished && <input type="submit" value="Voltar tela de inicio " onClick={handleBackClick} />}
 
     </div>
   )
