@@ -31,6 +31,7 @@ const LiveAuction = () => {
 
   const [bids, setBids] = useState<Bid[]>([])
   const [highestBid, setHighestBid] = useState<Bid | null>(null)
+  const [lastBid, setLastBid] = useState<Bid | null>(null) // Novo estado para armazenar a última oferta
   const bottomEl = useRef<HTMLDivElement>(null)
   const { socket } = useContext(SocketContext)
   const [tempo, setTempo] = useState(auction.tempMax * 60);
@@ -41,6 +42,8 @@ const LiveAuction = () => {
   const auctionStartTimeoutId = useRef<NodeJS.Timeout | null>(null); // Novo useRef para o timeout de início do leilão
   const [isAuctionFinished, setIsAuctionFinished] = useState(false); // Novo estado para verificar se o leilão foi finalizado
 
+
+  //esse useeffect é pra funcionar o cronometro
   useEffect(() => {
     if (tempo > 0) {
       const intervalo = setInterval(() => {
@@ -49,6 +52,12 @@ const LiveAuction = () => {
       return () => clearInterval(intervalo);
     } else {
       console.log('Cronômetro concluído');
+      if (lastBid) {
+        window.alert(`Leilão finalizado. O arrematador foi ${lastBid.user} com o lance de ${lastBid.value}`);
+      } else {
+        window.alert('Leilão finalizado');
+      }
+      setIsAuctionFinished(true);
     }
   }, [tempo]);
 
@@ -56,16 +65,23 @@ const LiveAuction = () => {
     console.log('Message received');
     console.log(messageObj);
   
+    // Verifica se o leilão já terminou antes de aceitar novas ofertas
+    if (isAuctionFinished) {
+      console.log('Leilão já terminou. Ignorando nova oferta.');
+      return;
+    }
+  
     const updatedBids = [...bids, messageObj];
     setBids(updatedBids);
     lastBidTime.current = Date.now();
   
     setHighestBid(messageObj);
+    setLastBid(messageObj); // Atualiza a última oferta sempre que uma nova oferta é recebida
   
     if (timeoutId.current) {
       clearTimeout(timeoutId.current);
     }
-  
+      //verifica o ultimo lance dado e apresenta como ganhador
     timeoutId.current = setTimeout(() => {
       const timeSinceLastBid = Date.now() - lastBidTime.current;
       if (timeSinceLastBid >= 10000) {
@@ -83,7 +99,7 @@ const LiveAuction = () => {
     if (auctionStartTimeoutId.current) {
       clearTimeout(auctionStartTimeoutId.current);
     }
-  }, [bids]);
+  }, [bids, isAuctionFinished]); // Adiciona isAuctionFinished às dependências do useCallback
 
   socket.on(`${process.env.REACT_APP_MESSAGE_RECEIVED_EVENT}`, handleMessageReceived)
 
@@ -114,16 +130,19 @@ const LiveAuction = () => {
   return (
     <div className={styles.container}>
 
-      <h1 className={styles.auctionTitle}>Leilão ao vivo do item "{auction.title}"</h1>
-      <h1>{formatTime(tempo)}</h1>
-      <h1>{(valorInit)}</h1>
+      <h1 className={styles.auctionTitle}>Leilão ao vivo do item
+
+ "{auction.title}"</h1>
+      
+      <h1>{formatTime(tempo) /*formato o temporizador*/ }</h1>
+      <h1>{(valorInit)/*formato o valor inicial para real*/}</h1>
 
       <div id='scroll-area' className={styles.liveAuctionArea}>
         {[...bids].sort((a, b) => a.value - b.value).map((b, index) => <BidCard key={index} bid={b} />)}
         <div ref={bottomEl}></div>
 
       </div>
-  
+      
       {isAuctionFinished && <input type="submit" value="Voltar tela de inicio " onClick={handleBackClick} />}
 
     </div>
