@@ -26,7 +26,7 @@ const LiveAuction = () => {
   const [bids, setBids] = useState<Bid[]>([])
   const bottomEl = useRef<HTMLDivElement>(null)
   const { socket } = useContext(SocketContext)
-  const [tempo, setTempo] = useState(0);
+  const [tempo, setTempo] = useState(auction.tempMax * 60); // Aqui está a constante 'tempo' que recebe o valor de 'tempMax' convertido para segundos
   const [hasBidBeenMade, setHasBidBeenMade] = useState(false);
   let timeoutId: NodeJS.Timeout | null = null;
 
