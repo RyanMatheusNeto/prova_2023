@@ -39,7 +39,7 @@ const Home = () => {
     try {
       await uploadBytes(storageRef, image as File)
       const imageURL = await getDownloadURL(storageRef)
-      const auction: Auction = { id: uuid, imageURL, title, description, initialBid, tempMax: tempMax * 60 } // Convertendo minutos para segundos
+      const auction: Auction = { id: uuid, imageURL, title, description, initialBid, tempMax } // Convertendo minutos para segundos
       console.log(auction)
 
       socket.emit(`${process.env.REACT_APP_AUCTION_STARTED_EVENT}`, auction)
