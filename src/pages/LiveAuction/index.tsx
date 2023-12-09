@@ -5,14 +5,11 @@ import { useCallback, useContext, useEffect, useRef, useState } from 'react'
 import BidCard from '../../components/BidCard'
 import { SocketContext } from '../../context/SocketContext'
 
-
-// Adicione as propriedades 'username' e 'auctionId' ao tipo 'Bid'
 export type Bid = {
   value: number,
   user: string,
-  username: string, // Adicione essa linha
-  auctionId: string, // Adicione essa linha
-  // outras propriedades...
+  username: string,
+  auctionId: string,
 }
 
 type Location = {
@@ -29,18 +26,19 @@ const formatTime = (time: number) => {
 
 const LiveAuction = () => {
   const location: Location = useLocation()
-  const navigate = useNavigate() // useNavigate em vez de useHistory
+  const navigate = useNavigate()
   const { auction } = location.state
 
   const [bids, setBids] = useState<Bid[]>([])
-  const [highestBid, setHighestBid] = useState<Bid | null>(null) // Adicionado para armazenar o lance mais alto
+  const [highestBid, setHighestBid] = useState<Bid | null>(null)
   const bottomEl = useRef<HTMLDivElement>(null)
   const { socket } = useContext(SocketContext)
-  const [tempo, setTempo] = useState(auction.tempMax * 60); // Aqui está a constante 'tempo' que recebe o valor de 'tempMax' convertido para segundos
+  const [tempo, setTempo] = useState(auction.tempMax * 60);
   const[valorInit, setValorInit] = useState(auction.initialBid.toLocaleString
     ('pt-br', {style: 'currency', currency: 'BRL'}))
   const timeoutId = useRef<NodeJS.Timeout | null>(null);
   const lastBidTime = useRef(Date.now());
+  const auctionStartTimeoutId = useRef<NodeJS.Timeout | null>(null); // Novo useRef para o timeout de início do leilão
 
   useEffect(() => {
     if (tempo > 0) {
@@ -59,30 +57,30 @@ const LiveAuction = () => {
   
     const updatedBids = [...bids, messageObj];
     setBids(updatedBids);
-    lastBidTime.current = Date.now(); // Atualiza o tempo do último lance
+    lastBidTime.current = Date.now();
   
-    // Atualiza o lance mais alto
-    setHighestBid(messageObj); // Sempre atualiza para o último lance recebido
+    setHighestBid(messageObj);
   
-    // Limpa o timeout anterior
     if (timeoutId.current) {
       clearTimeout(timeoutId.current);
     }
   
-    // Inicia um novo timeout / terminar essa função porque esta retornando o penultimo maior valor
     timeoutId.current = setTimeout(() => {
       const timeSinceLastBid = Date.now() - lastBidTime.current;
-      if (timeSinceLastBid >= 10000) { // 30 segundos
-        // Se nenhum lance foi feito dentro de 30 segundos, finaliza o leilão
-        console.log('Leilão cancelado');
-        socket.emit('Leilão cancelado', { message: 'Nenhum lance foi feito dentro de 30 segundos' });
+      if (timeSinceLastBid >= 10000) {
+        socket.emit('Leilão finalizado', { message: 'Nenhum lance foi feito dentro de 10 segundos' });
         if (highestBid) {
-          window.alert(`Leilão cancelado. O arrematador foi ${highestBid.user} com o lance de ${highestBid.value}`);
+          window.alert(`Leilão finalizado. O arrematador foi ${highestBid.user} com o lance de ${highestBid.value}`);
         } else {
-          window.alert('Leilão cancelado');
+          window.alert('Leilão finalizado');
         }
       }
     }, 10000);
+
+    // Limpa o timeout de início do leilão quando um lance é recebido
+    if (auctionStartTimeoutId.current) {
+      clearTimeout(auctionStartTimeoutId.current);
+    }
   }, [bids]);
 
   socket.on(`${process.env.REACT_APP_MESSAGE_RECEIVED_EVENT}`, handleMessageReceived)
@@ -92,8 +90,24 @@ const LiveAuction = () => {
   }, [bids])
 
   const handleBackClick = () => {
-    navigate('/') // navigate em vez de history.push
+    navigate('/')
   }
+
+  // Novo useEffect para verificar se algum lance foi feito nos primeiros 10 segundos
+  useEffect(() => {
+    auctionStartTimeoutId.current = setTimeout(() => {
+      if (bids.length === 0) {
+        window.alert('Leilão cancelado');
+        // Aqui você pode adicionar mais código para lidar com o cancelamento do leilão
+      }
+    }, 10000);
+
+    return () => {
+      if (auctionStartTimeoutId.current) {
+        clearTimeout(auctionStartTimeoutId.current);
+      }
+    };
+  }, []);
 
   return (
     <div className={styles.container}>
@@ -107,9 +121,8 @@ const LiveAuction = () => {
         <div ref={bottomEl}></div>
 
       </div>
-        
-      <input type="submit" value="Voltar tela de inicio " onClick={handleBackClick} /*arrumar depois porque esse 
-      botão só deve ser exibido assim que o leilão ser encerrado*//>
+  
+      <input type="submit" value="Voltar tela de inicio " onClick={handleBackClick} />
 
     </div>
   )
