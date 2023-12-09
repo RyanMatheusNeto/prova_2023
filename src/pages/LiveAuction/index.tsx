@@ -27,8 +27,10 @@ const LiveAuction = () => {
   const bottomEl = useRef<HTMLDivElement>(null)
   const { socket } = useContext(SocketContext)
   const [tempo, setTempo] = useState(auction.tempMax * 60); // Aqui está a constante 'tempo' que recebe o valor de 'tempMax' convertido para segundos
-  const [hasBidBeenMade, setHasBidBeenMade] = useState(false);
-  let timeoutId: NodeJS.Timeout | null = null;
+  const[valorInit, setValorInit] = useState(auction.initialBid.toLocaleString
+    ('pt-br', {style: 'currency', currency: 'BRL'}))
+  const timeoutId = useRef<NodeJS.Timeout | null>(null);
+  const lastBidTime = useRef(Date.now());
 
   useEffect(() => {
     if (tempo > 0) {
@@ -47,19 +49,23 @@ const LiveAuction = () => {
 
     const updatedBids = [...bids, messageObj];
     setBids(updatedBids);
+    lastBidTime.current = Date.now(); // Atualiza o tempo do último lance
 
-    // Um lance foi feito, então atualizamos o estado e limpamos o timeout anterior
-    setHasBidBeenMade(true);
-    if (timeoutId) {
-      clearTimeout(timeoutId);
+    // Limpa o timeout anterior
+    if (timeoutId.current) {
+      clearTimeout(timeoutId.current);
     }
 
-    // Iniciamos um novo timeout
-    timeoutId = setTimeout(() => {
-      // Se nenhum lance foi feito dentro de 30 segundos, finalizamos o leilão
-      console.log('Leilão finalizado');
-      socket.emit('Leilão finalizado', { message: 'Nenhum lance foi feito dentro de 30 segundos' });
-    }, 30000);
+    // Inicia um novo timeout / terminar essa função
+    timeoutId.current = setTimeout(() => {
+      const timeSinceLastBid = Date.now() - lastBidTime.current;
+      if (timeSinceLastBid >= 30000) { // 30 segundos
+        // Se nenhum lance foi feito dentro de 10 segundos, finaliza o leilão
+        console.log('Leilão cancelado');
+        socket.emit('Leilão cancelado', { message: 'Nenhum lance foi feito dentro de 30 segundos' });
+        window.alert('Leilão cancelado');
+      }
+    }, 10000);
   }, [bids]);
 
   socket.on(`${process.env.REACT_APP_MESSAGE_RECEIVED_EVENT}`, handleMessageReceived)
@@ -77,9 +83,10 @@ const LiveAuction = () => {
 
       <h1 className={styles.auctionTitle}>Leilão ao vivo do item "{auction.title}"</h1>
       <h1>{formatTime(tempo)}</h1>
+      <h1>{(valorInit)}</h1>
 
       <div id='scroll-area' className={styles.liveAuctionArea}>
-        {bids.map((b, index) => <BidCard key={index} bid={b} />)}
+        {[...bids].sort((a, b) => a.value - b.value).map((b, index) => <BidCard key={index} bid={b} />)}
         <div ref={bottomEl}></div>
 
       </div>
