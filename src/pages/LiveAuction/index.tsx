@@ -2,9 +2,18 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { Auction } from '../../models/Auction'
 import styles from './styles.module.css'
 import { useCallback, useContext, useEffect, useRef, useState } from 'react'
-import { Bid } from '../../models/Bid'
 import BidCard from '../../components/BidCard'
 import { SocketContext } from '../../context/SocketContext'
+
+
+// Adicione as propriedades 'username' e 'auctionId' ao tipo 'Bid'
+export type Bid = {
+  value: number,
+  user: string,
+  username: string, // Adicione essa linha
+  auctionId: string, // Adicione essa linha
+  // outras propriedades...
+}
 
 type Location = {
   state: {
@@ -24,6 +33,7 @@ const LiveAuction = () => {
   const { auction } = location.state
 
   const [bids, setBids] = useState<Bid[]>([])
+  const [highestBid, setHighestBid] = useState<Bid | null>(null) // Adicionado para armazenar o lance mais alto
   const bottomEl = useRef<HTMLDivElement>(null)
   const { socket } = useContext(SocketContext)
   const [tempo, setTempo] = useState(auction.tempMax * 60); // Aqui está a constante 'tempo' que recebe o valor de 'tempMax' convertido para segundos
@@ -46,24 +56,31 @@ const LiveAuction = () => {
   const handleMessageReceived = useCallback((messageObj: Bid) => {
     console.log('Message received');
     console.log(messageObj);
-
+  
     const updatedBids = [...bids, messageObj];
     setBids(updatedBids);
     lastBidTime.current = Date.now(); // Atualiza o tempo do último lance
-
+  
+    // Atualiza o lance mais alto
+    setHighestBid(messageObj); // Sempre atualiza para o último lance recebido
+  
     // Limpa o timeout anterior
     if (timeoutId.current) {
       clearTimeout(timeoutId.current);
     }
-
-    // Inicia um novo timeout / terminar essa função
+  
+    // Inicia um novo timeout / terminar essa função porque esta retornando o penultimo maior valor
     timeoutId.current = setTimeout(() => {
       const timeSinceLastBid = Date.now() - lastBidTime.current;
-      if (timeSinceLastBid >= 30000) { // 30 segundos
-        // Se nenhum lance foi feito dentro de 10 segundos, finaliza o leilão
+      if (timeSinceLastBid >= 10000) { // 30 segundos
+        // Se nenhum lance foi feito dentro de 30 segundos, finaliza o leilão
         console.log('Leilão cancelado');
         socket.emit('Leilão cancelado', { message: 'Nenhum lance foi feito dentro de 30 segundos' });
-        window.alert('Leilão cancelado');
+        if (highestBid) {
+          window.alert(`Leilão cancelado. O arrematador foi ${highestBid.user} com o lance de ${highestBid.value}`);
+        } else {
+          window.alert('Leilão cancelado');
+        }
       }
     }, 10000);
   }, [bids]);
