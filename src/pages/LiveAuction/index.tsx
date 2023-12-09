@@ -35,8 +35,7 @@ const LiveAuction = () => {
   const bottomEl = useRef<HTMLDivElement>(null)
   const { socket } = useContext(SocketContext)
   const [tempo, setTempo] = useState(auction.tempMax * 60);
-  const[valorInit, setValorInit] = useState(auction.initialBid.toLocaleString
-    ('pt-br', {style: 'currency', currency: 'BRL'}))
+  const[valorInit, setValorInit] = useState(auction.initialBid) // Alterado para armazenar o valor numérico do lance inicial
   const timeoutId = useRef<NodeJS.Timeout | null>(null);
   const lastBidTime = useRef(Date.now());
   const auctionStartTimeoutId = useRef<NodeJS.Timeout | null>(null); // Novo useRef para o timeout de início do leilão
@@ -71,6 +70,12 @@ const LiveAuction = () => {
       return;
     }
   
+    // Verifica se a oferta é maior ou igual ao lance inicial
+    if (messageObj.value < valorInit) {
+      console.log('Oferta ignorada. O valor é menor que o lance inicial.');
+      return;
+    }
+  
     const updatedBids = [...bids, messageObj];
     setBids(updatedBids);
     lastBidTime.current = Date.now();
@@ -99,7 +104,7 @@ const LiveAuction = () => {
     if (auctionStartTimeoutId.current) {
       clearTimeout(auctionStartTimeoutId.current);
     }
-  }, [bids, isAuctionFinished]); // Adiciona isAuctionFinished às dependências do useCallback
+  }, [bids, isAuctionFinished, valorInit]); // Adiciona valorInit às dependências do useCallback
 
   socket.on(`${process.env.REACT_APP_MESSAGE_RECEIVED_EVENT}`, handleMessageReceived)
 
@@ -132,10 +137,11 @@ const LiveAuction = () => {
 
       <h1 className={styles.auctionTitle}>Leilão ao vivo do item
 
+
  "{auction.title}"</h1>
       
       <h1>{formatTime(tempo) /*formato o temporizador*/ }</h1>
-      <h1>{(valorInit)/*formato o valor inicial para real*/}</h1>
+      <h1>{(valorInit.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })/*formato o valor inicial para real*/)}</h1>
 
       <div id='scroll-area' className={styles.liveAuctionArea}>
         {[...bids].sort((a, b) => a.value - b.value).map((b, index) => <BidCard key={index} bid={b} />)}
