@@ -1,14 +1,15 @@
 .square {
-    background: #565174;
-    border: none;
-    border-radius: .25rem;
-    font-size: 1.75rem;
-    font-weight: bold;
-    line-height: 35px;
-    height: 4rem;
-    width: 4rem;
-    margin: .26rem;
-    padding: 0;
-    text-align: center;
-    color:#17c6ff;
-  }
+  background: #565174;
+  border: none;
+  border-radius: .25rem;
+  font-size: 1.75rem;
+  font-weight: bold;
+  line-height: 35px;
+  height: 4rem;
+  width: 4rem;
+  margin: .26rem;
+  padding: 0;
+  text-align: center;
+  color:#17c6ff;
+  position: static;
+}

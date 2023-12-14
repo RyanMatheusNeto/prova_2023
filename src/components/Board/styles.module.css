@@ -5,7 +5,10 @@
   justify-content: center;
   height: 100vh; /* This assumes that the card should take up the full height of the view */
 }
- 
+.boardrow{
+  background-color: #ccc;
+
+}
   
   .username {
     font-family: 'bold';

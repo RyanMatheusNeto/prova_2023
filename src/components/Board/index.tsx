@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Square, SquareValue } from "../Estilo/index";
+import { Square, SquareValue } from "../Estilo";
 import styles from './styles.module.css'
 
 export type BoardState = SquareValue[];
@@ -63,7 +63,7 @@ export function Board({isXTurn, squares, onPlay}: BoardProps) {
       );
     }
 
-    rows.push(<div key={i} className="board-row">{cells}</div>);
+    rows.push(<div key={i} className={styles.boardrow}>{cells}</div>);
   }
 
   return(
