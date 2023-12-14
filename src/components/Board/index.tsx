@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { Square, SquareValue } from "../Estilo/index";
 import styles from './styles.module.css'
 
@@ -10,11 +11,31 @@ export type BoardProps = {
 };
 
 export function Board({isXTurn, squares, onPlay}: BoardProps) {
+  const [timeLeft, setTimeLeft] = useState(10);
 
   const winner = calculateWinner(squares);
+  const isDraw = !winner && squares.every(square => square !== null);
   const status = winner ? 
     `O vencedor é ${winner}!` :
+    isDraw ?
+    `Empate!` :
     `É a vez de ${isXTurn ? "X" : "O"}`;
+
+  useEffect(() => {
+    if (winner || isDraw) {
+      const timer = setInterval(() => {
+        setTimeLeft(timeLeft - 1);
+      }, 1000);
+      return () => clearInterval(timer);
+    }
+  }, [winner, isDraw, timeLeft]);
+
+  useEffect(() => {
+    if (timeLeft === 0) {
+      onPlay(Array(9).fill(null));
+      setTimeLeft(10);
+    }
+  }, [timeLeft, onPlay]);
 
   function handleClick(i: number): void {
     if(squares[i] || winner) return;
@@ -44,11 +65,12 @@ export function Board({isXTurn, squares, onPlay}: BoardProps) {
 
     rows.push(<div key={i} className="board-row">{cells}</div>);
   }
-  
 
   return(
     <div className={styles.card}>
+      <h1>Jogo da Velha</h1>
       <span className={styles.username}>{status}</span>
+      {(winner || isDraw) && <span>Reiniciando em {timeLeft} segundos...</span>}
       {rows}
     </div>
   );

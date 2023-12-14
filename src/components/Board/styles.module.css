@@ -1,11 +1,11 @@
 .card {
-    padding: 0 10px;
-    margin: 10px 0;
-  }
-  
-  span {
-    font-size: 14px;
-  }
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh; /* This assumes that the card should take up the full height of the view */
+}
+ 
   
   .username {
     font-family: 'bold';
@@ -13,6 +13,4 @@
     margin-right: 20px;
   }
   
-  .bid {
-    font-family: 'regular';
-  }
+  
