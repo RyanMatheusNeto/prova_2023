@@ -11,6 +11,8 @@ function Home() {
   const isXTurn = currentMove % 2 === 0;
   const currentSquares = history[currentMove];
 
+
+
   const handleClick = (nextSquares: BoardState) => {
     const nextHistory = [...history.slice(0, currentMove + 1), nextSquares];
     setHistory(nextHistory);
@@ -26,17 +28,26 @@ function Home() {
         socketInstance.off("board");
       }
     }, [])
-    
+    //quando for criar  receber vai ser o valor board[num]
     const handle = (data: any) => {
       const newBoard = {
         board: data
       }
+      
+      socketInstance.emit('board', newBoard)
     }
+    const handleAndClick = (nextSquares: BoardState) => {
+      handleClick(nextSquares);
+      handle(nextSquares);
+
+  }
+
+  
   return (
     <div className="game">
       <div className="game-board">
         
-        <Board isXTurn={isXTurn} squares={currentSquares} onPlay={handleClick} />
+        <Board isXTurn={isXTurn} squares={currentSquares} onPlay={handleAndClick} />
       </div>
       <div className="dados">
         
