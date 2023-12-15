@@ -4,6 +4,11 @@ import styles from './styles.module.css'
 
 export type BoardState = SquareValue[];
 
+export type SquareProps = {
+  value: SquareValue;
+  onSquareClick: () => void;
+};
+
 export type BoardProps = {
   isXTurn: boolean,
   squares: BoardState,

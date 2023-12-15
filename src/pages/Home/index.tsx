@@ -1,6 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { Board, BoardState } from '../../components/Board';
 import { socket } from '../../socket';
+import { Square } from '../../components/Estilo';
+
+export interface IBoard {
+  board: boolean,
+  isOwner?: boolean
+}
 
 function Home() {
 
@@ -10,6 +16,8 @@ function Home() {
   const [currentMove, setCurrentMove] = useState(0);
   const isXTurn = currentMove % 2 === 0;
   const currentSquares = history[currentMove];
+
+  const [boards, setBoards] = useState<IBoard[]>([])
 
 
 
@@ -22,12 +30,14 @@ function Home() {
 
     useEffect(() => {
       socketInstance.on("board", (board) =>{
-        console.log('jogada recebida', board)
+        setBoards((prev) =>[... prev, board])
       })
       return() =>{
         socketInstance.off("board");
       }
     }, [])
+
+
     //quando for criar  receber vai ser o valor board[num]
     const handle = (data: any) => {
       const newBoard = {
@@ -35,6 +45,10 @@ function Home() {
       }
       
       socketInstance.emit('board', newBoard)
+      setBoards(prev => [
+        ... prev,
+        {... newBoard, isOwner: true}
+      ])
     }
     const handleAndClick = (nextSquares: BoardState) => {
       handleClick(nextSquares);
